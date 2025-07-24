@@ -1,31 +1,37 @@
-name: python-app
+name: Auto Summarizer & Deploy
 
 on:
   push:
     branches:
-      - main  # or "master" depending on your default branch
+      - main  # or 'master' if that's your branch
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout repo
+      - name: Checkout Repo
         uses: actions/checkout@v3
 
-      - name: Set up Python
+      - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: 3.11
 
-      - name: Install dependencies (if any)
+      - name: Install dependencies
         run: |
-          pip install -r requirements.txt || echo "no requirements.txt"
+          pip install -r requirements.txt
 
-      - name: Run Python script to generate index.html
-        run: python app.py
+      - name: Run Summarizer Script
+        env:
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          CI: "true"
+        run: |
+          python app.py
 
-      - name: Deploy to GitHub Pages 🚀
+      - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: .  # Current directory with index.html
+          publish_dir: ./
+          publish_branch: gh-pages
