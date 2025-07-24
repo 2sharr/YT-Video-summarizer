@@ -19,15 +19,13 @@ jobs:
           python-version: 3.11
 
       - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
+        run: pip install -r requirements.txt
 
       - name: Run Summarizer Script
         env:
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
           CI: "true"
-        run: |
-          python app.py
+        run: python app.py
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
