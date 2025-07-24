@@ -22,7 +22,7 @@ jobs:
           pip install -r requirements.txt || echo "no requirements.txt"
 
       - name: Run Python script to generate index.html
-        run: python generate.py
+        run: python app.py
 
       - name: Deploy to GitHub Pages 🚀
         uses: peaceiris/actions-gh-pages@v3
