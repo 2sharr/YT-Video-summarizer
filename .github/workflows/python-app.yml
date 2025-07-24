@@ -1,17 +1,16 @@
-name: Run YT Summarizer
+name: YouTube Summarizer Workflow
 
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  workflow_dispatch:  # Allows manual trigger via GitHub UI
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repository
+    - name: Checkout repo
       uses: actions/checkout@v3
 
     - name: Set up Python
@@ -24,6 +23,26 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
-    - name: Run the script
+    - name: Run script
       run: |
-        python app.py  # ✅ Run your actual script
+        python app.py > output.txt
+
+    - name: Upload summary output
+      uses: actions/upload-artifact@v4
+      with:
+        name: summary
+        path: output.txt
+
+  report:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Report Status
+      run: echo "Summary generated. You can download it from the build artifacts."
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+    - name: Fake deploy step
+      run: echo "You can hook this to a real deployment (e.g., send to Telegram, upload to S3, etc.)"
