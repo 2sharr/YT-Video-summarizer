@@ -3,7 +3,7 @@ name: Auto Summarizer & Deploy
 on:
   push:
     branches:
-      - main  # or 'master' if that's your branch
+      - main
 
 jobs:
   build:
