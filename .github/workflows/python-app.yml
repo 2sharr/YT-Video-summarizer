@@ -8,7 +8,6 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     steps:
@@ -18,7 +17,7 @@ jobs:
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.10'  # Set your required version
+        python-version: '3.10'
 
     - name: Install dependencies
       run: |
@@ -27,4 +26,4 @@ jobs:
 
     - name: Run the script
       run: |
-        python main.py  # Change this to your main script file
+        python app.py  # ✅ Run your actual script
