@@ -41,25 +41,30 @@ def summarize_and_save(youtube_link, language="English"):
         return
 
     if language == "Hindi":
-        prompt = f"Please summarize the following video transcript in Hindi:\n"
+        prompt = "Please summarize the following video transcript in Hindi:\n"
     elif language == "Marathi":
-        prompt = f"Please summarize the following video transcript in Marathi:\n"
+        prompt = "Please summarize the following video transcript in Marathi:\n"
     else:
         prompt = default_prompt
 
     summary = generate_gemini_content(transcript_text, prompt)
     if summary:
-        # Save summary to HTML
+        # Replace newlines with <br> separately to avoid f-string escape issues
+        summary_html = summary.replace("\n", "<br>")
+
+        html_content = """
+        <html>
+            <head><title>YT Summary</title></head>
+            <body style="font-family:sans-serif; padding:2rem; background:#111; color:white;">
+                <h1>Video Summary</h1>
+                <p>{}</p>
+            </body>
+        </html>
+        """.format(summary_html)
+
         with open("index.html", "w", encoding="utf-8") as f:
-            f.write(f"""
-            <html>
-                <head><title>YT Summary</title></head>
-                <body style="font-family:sans-serif; padding:2rem; background:#111; color:white;">
-                    <h1>Video Summary</h1>
-                    <p>{summary.replace('\n', '<br>')}</p>
-                </body>
-            </html>
-            """)
+            f.write(html_content)
+
         print("Summary saved to index.html")
     else:
         print("Failed to generate summary.")
@@ -78,15 +83,21 @@ if __name__ == "__main__":
         language = st.selectbox("Select Language for Summary:", ["English", "Hindi", "Marathi"], index=0)
 
         if youtube_link:
-            video_id = youtube_link.split("v=")[1].split("&")[0]
-            thumbnail = f"https://img.youtube.com/vi/{video_id}/0.jpg"
-            st.image(thumbnail, use_container_width=True)
+            try:
+                video_id = youtube_link.split("v=")[1].split("&")[0]
+                thumbnail = f"https://img.youtube.com/vi/{video_id}/0.jpg"
+                st.image(thumbnail, use_container_width=True)
+            except:
+                st.warning("Invalid YouTube URL")
 
         if st.button("Summarize"):
             with st.spinner("Summarizing..."):
                 time.sleep(2)
                 summarize_and_save(youtube_link, language)
 
-                with open("index.html", "r", encoding="utf-8") as f:
-                    st.markdown("## Summary:")
-                    st.components.v1.html(f.read(), height=500, scrolling=True)
+                if os.path.exists("index.html"):
+                    with open("index.html", "r", encoding="utf-8") as f:
+                        st.markdown("## Summary:")
+                        st.components.v1.html(f.read(), height=500, scrolling=True)
+                else:
+                    st.error("Failed to generate summary.")
