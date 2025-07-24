@@ -1,16 +1,15 @@
-name: YouTube Summarizer Workflow
+name: Auto Summarize Video
 
 on:
   push:
     branches: [ main ]
-  workflow_dispatch:  # Allows manual trigger via GitHub UI
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repo
+    - name: Checkout
       uses: actions/checkout@v3
 
     - name: Set up Python
@@ -20,29 +19,18 @@ jobs:
 
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -r requirements.txt
 
-    - name: Run script
-      run: |
-        python app.py > output.txt
+    - name: Set environment
+      run: echo "CI=true" >> $GITHUB_ENV
 
-    - name: Upload summary output
-      uses: actions/upload-artifact@v4
+    - name: Run summarizer
+      env:
+        GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+      run: python app.py
+
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
       with:
-        name: summary
-        path: output.txt
-
-  report:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-    - name: Report Status
-      run: echo "Summary generated. You can download it from the build artifacts."
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-    - name: Fake deploy step
-      run: echo "You can hook this to a real deployment (e.g., send to Telegram, upload to S3, etc.)"
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: .
