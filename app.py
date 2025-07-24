@@ -11,79 +11,82 @@ load_dotenv()
 # Configure Google Generative AI with API key
 genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 
-# Set Streamlit page configuration
-st.set_page_config(page_title="YouTube Video Summarizer", page_icon="youtube.png", layout="wide")
-
 # Define the summarization prompt
-prompt = """You are a YouTube video summarizer. You will be taking the transcript text
+default_prompt = """You are a YouTube video summarizer. You will be taking the transcript text
 and summarizing the entire video and providing the important summary in points
 within 250 words. Please provide the summary of the text given here: """
 
-# Function to extract transcript details from a YouTube video URL
 def extract_transcript_details(youtube_video_url):
     try:
-        # Extract video ID from the URL
-        video_id = youtube_video_url.split("=")[1]
+        video_id = youtube_video_url.split("v=")[1].split("&")[0]
         transcript_text = YouTubeTranscriptApi.get_transcript(video_id)
         transcript = " ".join([i["text"] for i in transcript_text])
         return transcript
     except Exception as e:
-        st.error(f"Failed to fetch transcript. Error: {str(e)}")
+        print(f"Transcript fetch error: {str(e)}")
         return None
 
-# Function to generate summary using Google Generative AI
 def generate_gemini_content(transcript_text, prompt):
     try:
         model = genai.GenerativeModel("gemini-pro")
         response = model.generate_content(prompt + transcript_text)
         return response.text
     except Exception as e:
-        st.error(f"Failed to generate summary. Error: {str(e)}")
+        print(f"Summary generation error: {str(e)}")
         return None
 
-# Streamlit UI components
-st.title("YouTube Video Summarizer 🎥")
+def summarize_and_save(youtube_link, language="English"):
+    transcript_text = extract_transcript_details(youtube_link)
+    if not transcript_text:
+        return
 
-# Input for YouTube Link
-youtube_link = st.text_input("Enter YouTube Video Link:", help="Paste the YouTube video link here.")
+    if language == "Hindi":
+        prompt = f"Please summarize the following video transcript in Hindi:\n"
+    elif language == "Marathi":
+        prompt = f"Please summarize the following video transcript in Marathi:\n"
+    else:
+        prompt = default_prompt
 
-# Language selection dropdown
-language = st.selectbox("Select Language for Summary:", ["English", "Hindi", "Marathi"], index=0)
+    summary = generate_gemini_content(transcript_text, prompt)
+    if summary:
+        # Save summary to HTML
+        with open("index.html", "w", encoding="utf-8") as f:
+            f.write(f"""
+            <html>
+                <head><title>YT Summary</title></head>
+                <body style="font-family:sans-serif; padding:2rem; background:#111; color:white;">
+                    <h1>Video Summary</h1>
+                    <p>{summary.replace('\n', '<br>')}</p>
+                </body>
+            </html>
+            """)
+        print("Summary saved to index.html")
+    else:
+        print("Failed to generate summary.")
 
-# Display video thumbnail if URL is valid
-if youtube_link:
-    try:
-        # Check if the YouTube link is valid by looking for "v=" parameter
-        if "v=" in youtube_link:
-            video_id = youtube_link.split("v=")[1].split("&")[0]
-            video_thumbnail = f"http://img.youtube.com/vi/{video_id}/0.jpg"
-            st.image(video_thumbnail, use_container_width=True)
-        else:
-            st.error("Please enter a valid YouTube URL.")
-    except IndexError:
-        st.error("Invalid YouTube URL. Please ensure the URL is in the correct format.")
+# ---------- Entry Point ----------
+if __name__ == "__main__":
+    # Non-interactive mode for GitHub Actions
+    if os.getenv("CI", "false").lower() == "true":
+        default_link = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"  # Replace with real or dummy link
+        summarize_and_save(default_link, language="English")
+    else:
+        # Streamlit UI
+        st.set_page_config(page_title="YouTube Video Summarizer", page_icon="📺", layout="wide")
+        st.title("YouTube Video Summarizer 🎥")
+        youtube_link = st.text_input("Enter YouTube Video Link:")
+        language = st.selectbox("Select Language for Summary:", ["English", "Hindi", "Marathi"], index=0)
 
-# Button to trigger summarization
-if st.button("Summarize", help="Click to generate summary"):
-    with st.spinner('Fetching summary...'):
-        time.sleep(2)  # Simulate loading time
         if youtube_link:
-            transcript_text = extract_transcript_details(youtube_link)
-            if transcript_text:
-                # Adjust prompt based on the selected language
-                if language == "Hindi":
-                    prompt = f"Please summarize the following video transcript in Hindi:\n{transcript_text}"
-                elif language == "Marathi":
-                    prompt = f"Please summarize the following video transcript in Marathi:\n{transcript_text}"
-                else:
-                    prompt = f"Please summarize the following video transcript in English:\n{transcript_text}"
+            video_id = youtube_link.split("v=")[1].split("&")[0]
+            thumbnail = f"https://img.youtube.com/vi/{video_id}/0.jpg"
+            st.image(thumbnail, use_container_width=True)
 
-                # Generate summary
-                summary = generate_gemini_content(transcript_text, prompt)
-                if summary:
+        if st.button("Summarize"):
+            with st.spinner("Summarizing..."):
+                time.sleep(2)
+                summarize_and_save(youtube_link, language)
+
+                with open("index.html", "r", encoding="utf-8") as f:
                     st.markdown("## Summary:")
-                    # Use dark mode-friendly styling for both light and dark mode
-                    st.markdown(
-                        f"<div style='padding: 1rem; background-color: #1e1e1e; color: white; border-radius: 10px;'>{summary}</div>",
-                        unsafe_allow_html=True
-                    )
+                    st.components.v1.html(f.read(), height=500, scrolling=True)
