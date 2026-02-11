@@ -1,33 +1,61 @@
-# YT-Video-summarizer
+# YT-Video-Summarizer
 
-A lightweight Python utility that:
+A Python utility that: 1. Extracts YouTube transcripts 2. Uses Google
+Gemini to summarize 3. Exports styled HTML output
 
-1. Reads a YouTube video transcript,
-2. Uses Google Gemini to summarize it,
-3. Exports a styled `index.html` summary page.
+------------------------------------------------------------------------
 
----
+## Requirements
 
-## 1) Project overview
+-   Python 3.9+
+-   Google API Key
+-   Internet connection
 
-`YT-Video-summarizer` is a script-first tool for quickly generating concise summaries of YouTube videos from transcripts. It's ideal for:
+------------------------------------------------------------------------
 
-- fast content triage,
-- study / review workflows,
-- creating shareable static HTML summary snippets.
+## Setup
 
-The current implementation is centered on one script (`app.py`) and uses a single hard-coded `YOUTUBE_LINK` constant for the input video.
-
----
-
-## 2) Prerequisites & install
-
-### Requirements
-- Python 3.9+
-- Google AI API key with access to Gemini models
-- Internet access (to fetch transcripts and call Gemini)
-
-### Clone
-```bash
+``` bash
 git clone <your-repo-url>
 cd YT-Video-summarizer
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+Create .env file:
+
+    GOOGLE_API_KEY=your_google_api_key
+
+------------------------------------------------------------------------
+
+## Run
+
+``` bash
+python app.py
+```
+
+Open `index.html` to view the summary.
+
+------------------------------------------------------------------------
+
+## Architecture
+
+YouTube URL → Transcript Extraction → Gemini Summary → HTML Output
+
+------------------------------------------------------------------------
+
+## Known Limitations
+
+-   Hardcoded YouTube URL
+-   Basic error handling
+-   No automated tests
+
+------------------------------------------------------------------------
+
+## Future Enhancements
+
+-   Add CLI input
+-   Improve URL parsing
+-   Add retry handling
+-   Add unit tests
